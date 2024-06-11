@@ -21,29 +21,26 @@
 **  Website: http://flysight.ca/                                          **
 ****************************************************************************/
 
-#include "main.h"
-#include "app_common.h"
 #include "charge.h"
 
-FS_Charge_State_t FS_Charge_GetState(void)
-{
-	if (HAL_GPIO_ReadPin(CHG_STAT_GPIO_Port, CHG_STAT_Pin))
-	{
-		return FS_CHARGE_COMPLETE;
-	}
-	else
-	{
-		return FS_CHARGE_ACTIVE;
-	}
+#include "app_common.h"
+#include "main.h"
+
+FS_Charge_State_t FS_Charge_GetState(void) {
+    if (HAL_GPIO_ReadPin(CHG_STAT_GPIO_Port, CHG_STAT_Pin)) {
+        return FS_CHARGE_COMPLETE;
+    }
+    else {
+        return FS_CHARGE_ACTIVE;
+    }
 }
 
-void FS_Charge_SetCurrent(FS_Charge_Current_t charge_current)
-{
-	GPIO_PinState chg_en_lo, chg_en_hi;
+void FS_Charge_SetCurrent(FS_Charge_Current_t charge_current) {
+    GPIO_PinState chg_en_lo, chg_en_hi;
 
-	chg_en_lo = ((~charge_current) >> 0) & 1;
-	chg_en_hi = ((~charge_current) >> 1) & 1;
+    chg_en_lo = ((~charge_current) >> 0) & 1;
+    chg_en_hi = ((~charge_current) >> 1) & 1;
 
-	HAL_GPIO_WritePin(CHG_EN_LO_GPIO_Port, CHG_EN_LO_Pin, chg_en_lo);
-	HAL_GPIO_WritePin(CHG_EN_HI_GPIO_Port, CHG_EN_HI_Pin, chg_en_hi);
+    HAL_GPIO_WritePin(CHG_EN_LO_GPIO_Port, CHG_EN_LO_Pin, chg_en_lo);
+    HAL_GPIO_WritePin(CHG_EN_HI_GPIO_Port, CHG_EN_HI_Pin, chg_en_hi);
 }

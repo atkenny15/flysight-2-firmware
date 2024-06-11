@@ -35,14 +35,14 @@
 void FS_Log_Init(uint32_t sessionId);
 void FS_Log_DeInit(uint32_t sessionId);
 
-void FS_Log_WriteBaroData(const FS_Baro_Data_t *current);
-void FS_Log_WriteHumData(const FS_Hum_Data_t *current);
-void FS_Log_WriteMagData(const FS_Mag_Data_t *current);
-void FS_Log_WriteGNSSData(const FS_GNSS_Data_t *current);
-void FS_Log_WriteGNSSTime(const FS_GNSS_Time_t *current);
-void FS_Log_WriteGNSSRaw(const FS_GNSS_Raw_t *current);
-void FS_Log_WriteIMUData(const FS_IMU_Data_t *current);
-void FS_Log_WriteVBATData(const FS_VBAT_Data_t *current);
-void FS_Log_WriteEvent(const char *format, ...);
+void FS_Log_WriteBaroData(const FS_Baro_Data_t* current);
+void FS_Log_WriteHumData(const FS_Hum_Data_t* current);
+void FS_Log_WriteMagData(const FS_Mag_Data_t* current);
+void FS_Log_WriteGNSSData(const FS_GNSS_Data_t* current);
+void FS_Log_WriteGNSSTime(const FS_GNSS_Time_t* current);
+void FS_Log_WriteGNSSRaw(const FS_GNSS_Raw_t* current);
+void FS_Log_WriteIMUData(const FS_IMU_Data_t* current);
+void FS_Log_WriteVBATData(const FS_VBAT_Data_t* current);
+void FS_Log_WriteEvent(const char* format, ...);
 
 #endif /* LOG_H_ */

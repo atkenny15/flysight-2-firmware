@@ -21,14 +21,14 @@
  **  Contact: Bionic Avionics Inc.                                         **
  **  Website: http://flysight.ca/                                          **
  ****************************************************************************/
- /* USER CODE END Header */
+/* USER CODE END Header */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef __USER_DISKIO_H
 #define __USER_DISKIO_H
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
 /* USER CODE BEGIN 0 */
@@ -37,7 +37,7 @@
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
-extern Diskio_drvTypeDef  USER_Driver;
+extern Diskio_drvTypeDef USER_Driver;
 
 /* USER CODE END 0 */
 

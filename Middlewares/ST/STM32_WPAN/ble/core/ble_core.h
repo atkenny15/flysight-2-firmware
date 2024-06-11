@@ -18,25 +18,23 @@
 #ifndef BLE_CORE_H__
 #define BLE_CORE_H__
 
-
 /* BLE standard definitions */
 #include "ble_std.h"
 
 /* BLE stack API definitions */
-#include "ble_defs.h"
-#include "auto/ble_vs_codes.h"
+#include "auto/ble_events.h"
 #include "auto/ble_gap_aci.h"
 #include "auto/ble_gatt_aci.h"
 #include "auto/ble_hal_aci.h"
 #include "auto/ble_hci_le.h"
 #include "auto/ble_l2cap_aci.h"
-#include "auto/ble_events.h"
+#include "auto/ble_vs_codes.h"
+#include "ble_defs.h"
 
 /* BLE stack buffer size definitions */
 #include "ble_bufsize.h"
 
 /* BLE stack legacy definitions */
 #include "ble_legacy.h"
-
 
 #endif /* BLE_CORE_H__ */

@@ -21,9 +21,6 @@
 **  Website: http://flysight.ca/                                          **
 ****************************************************************************/
 
-#include <stdbool.h>
-
-#include "main.h"
 #include "app_common.h"
 #include "audio_control.h"
 #include "baro.h"
@@ -36,163 +33,149 @@
 #include "led.h"
 #include "log.h"
 #include "mag.h"
+#include "main.h"
 #include "state.h"
 #include "vbat.h"
+#include <stdbool.h>
 
-#define LED_BLINK_MSEC      900
-#define LED_BLINK_TICKS     (LED_BLINK_MSEC*1000/CFG_TS_TICK_VAL)
+#define LED_BLINK_MSEC 900
+#define LED_BLINK_TICKS (LED_BLINK_MSEC * 1000 / CFG_TS_TICK_VAL)
 
 static uint8_t led_timer_id;
 
 static volatile bool hasFix = false;
 
-static volatile enum {
-	FS_CONTROL_INACTIVE = 0,
-	FS_CONTROL_ACTIVE
-} state = FS_CONTROL_INACTIVE;
+static volatile enum { FS_CONTROL_INACTIVE = 0, FS_CONTROL_ACTIVE } state = FS_CONTROL_INACTIVE;
 
-static void FS_ActiveControl_LED_Timer(void)
-{
-	// Turn on LED
-	FS_LED_On();
+static void FS_ActiveControl_LED_Timer(void) {
+    // Turn on LED
+    FS_LED_On();
 }
 
-void FS_ActiveControl_Init(void)
-{
-	// Initialize LEDs
-	FS_LED_SetColour(FS_LED_GREEN);
-	FS_LED_On();
+void FS_ActiveControl_Init(void) {
+    // Initialize LEDs
+    FS_LED_SetColour(FS_LED_GREEN);
+    FS_LED_On();
 
-	// Enable charging
-	FS_Charge_SetCurrent(FS_State_Get()->charge_current);
+    // Enable charging
+    FS_Charge_SetCurrent(FS_State_Get()->charge_current);
 
-	// Initialize LED timer
-	HW_TS_Create(CFG_TIM_PROC_ID_ISR, &led_timer_id, hw_ts_SingleShot, FS_ActiveControl_LED_Timer);
+    // Initialize LED timer
+    HW_TS_Create(CFG_TIM_PROC_ID_ISR, &led_timer_id, hw_ts_SingleShot, FS_ActiveControl_LED_Timer);
 
-	// Initialize state
-	hasFix = false;
-	state = FS_CONTROL_ACTIVE;
+    // Initialize state
+    hasFix = false;
+    state = FS_CONTROL_ACTIVE;
 }
 
-void FS_ActiveControl_DeInit(void)
-{
-	// Update state
-	state = FS_CONTROL_INACTIVE;
+void FS_ActiveControl_DeInit(void) {
+    // Update state
+    state = FS_CONTROL_INACTIVE;
 
-	// Delete timer
-	HW_TS_Delete(led_timer_id);
+    // Delete timer
+    HW_TS_Delete(led_timer_id);
 
-	// Disable charging
-	FS_Charge_SetCurrent(FS_CHARGE_DISABLE);
+    // Disable charging
+    FS_Charge_SetCurrent(FS_CHARGE_DISABLE);
 
-	// Turn off LEDs
-	FS_LED_Off();
+    // Turn off LEDs
+    FS_LED_Off();
 }
 
-void FS_Baro_DataReady_Callback(void)
-{
-	if (state != FS_CONTROL_ACTIVE) return;
+void FS_Baro_DataReady_Callback(void) {
+    if (state != FS_CONTROL_ACTIVE)
+        return;
 
-	if (FS_Config_Get()->enable_logging)
-	{
-		// Save to log file
-		FS_Log_WriteBaroData(FS_Baro_GetData());
-	}
+    if (FS_Config_Get()->enable_logging) {
+        // Save to log file
+        FS_Log_WriteBaroData(FS_Baro_GetData());
+    }
 }
 
-void FS_Hum_DataReady_Callback(void)
-{
-	if (state != FS_CONTROL_ACTIVE) return;
+void FS_Hum_DataReady_Callback(void) {
+    if (state != FS_CONTROL_ACTIVE)
+        return;
 
-	if (FS_Config_Get()->enable_logging)
-	{
-		// Save to log file
-		FS_Log_WriteHumData(FS_Hum_GetData());
-	}
+    if (FS_Config_Get()->enable_logging) {
+        // Save to log file
+        FS_Log_WriteHumData(FS_Hum_GetData());
+    }
 }
 
-void FS_Mag_DataReady_Callback(void)
-{
-	if (state != FS_CONTROL_ACTIVE) return;
+void FS_Mag_DataReady_Callback(void) {
+    if (state != FS_CONTROL_ACTIVE)
+        return;
 
-	if (FS_Config_Get()->enable_logging)
-	{
-		// Save to log file
-		FS_Log_WriteMagData(FS_Mag_GetData());
-	}
+    if (FS_Config_Get()->enable_logging) {
+        // Save to log file
+        FS_Log_WriteMagData(FS_Mag_GetData());
+    }
 }
 
-void FS_GNSS_DataReady_Callback(void)
-{
-	const FS_GNSS_Data_t *data = FS_GNSS_GetData();
+void FS_GNSS_DataReady_Callback(void) {
+    const FS_GNSS_Data_t* data = FS_GNSS_GetData();
 
-	if (state != FS_CONTROL_ACTIVE) return;
+    if (state != FS_CONTROL_ACTIVE)
+        return;
 
-	if (FS_Config_Get()->enable_audio)
-	{
-		// Update audio
-		FS_AudioControl_UpdateGNSS(data);
-	}
+    if (FS_Config_Get()->enable_audio) {
+        // Update audio
+        FS_AudioControl_UpdateGNSS(data);
+    }
 
-	if (FS_Config_Get()->enable_logging)
-	{
-		// Save to log file
-		FS_Log_WriteGNSSData(data);
-	}
+    if (FS_Config_Get()->enable_logging) {
+        // Save to log file
+        FS_Log_WriteGNSSData(data);
+    }
 
-	if (Custom_APP_IsConnected())
-	{
-		// Update BLE characteristic
-		Custom_GNSS_Update(data);
-	}
+    if (Custom_APP_IsConnected()) {
+        // Update BLE characteristic
+        Custom_GNSS_Update(data);
+    }
 
-	hasFix = (data->gpsFix == 3);
+    hasFix = (data->gpsFix == 3);
 }
 
-void FS_GNSS_TimeReady_Callback(bool validTime)
-{
-	if (state != FS_CONTROL_ACTIVE) return;
+void FS_GNSS_TimeReady_Callback(bool validTime) {
+    if (state != FS_CONTROL_ACTIVE)
+        return;
 
-	if (hasFix)
-	{
-		// Turn off LED
-		FS_LED_Off();
-		HW_TS_Start(led_timer_id, LED_BLINK_TICKS);
-	}
+    if (hasFix) {
+        // Turn off LED
+        FS_LED_Off();
+        HW_TS_Start(led_timer_id, LED_BLINK_TICKS);
+    }
 
-	if (validTime && FS_Config_Get()->enable_logging)
-	{
-		// Save to log file
-		FS_Log_WriteGNSSTime(FS_GNSS_GetTime());
-	}
+    if (validTime && FS_Config_Get()->enable_logging) {
+        // Save to log file
+        FS_Log_WriteGNSSTime(FS_GNSS_GetTime());
+    }
 }
 
-void FS_GNSS_RawReady_Callback(void)
-{
-	if (state != FS_CONTROL_ACTIVE) return;
+void FS_GNSS_RawReady_Callback(void) {
+    if (state != FS_CONTROL_ACTIVE)
+        return;
 
-	if (FS_Config_Get()->enable_logging)
-	{
-		// Save to log file
-		FS_Log_WriteGNSSRaw(FS_GNSS_GetRaw());
-	}
+    if (FS_Config_Get()->enable_logging) {
+        // Save to log file
+        FS_Log_WriteGNSSRaw(FS_GNSS_GetRaw());
+    }
 }
 
-void FS_IMU_DataReady_Callback(void)
-{
-	if (state != FS_CONTROL_ACTIVE) return;
+void FS_IMU_DataReady_Callback(void) {
+    if (state != FS_CONTROL_ACTIVE)
+        return;
 
-	if (FS_Config_Get()->enable_logging)
-	{
-		// Save to log file
-		FS_Log_WriteIMUData(FS_IMU_GetData());
-	}
+    if (FS_Config_Get()->enable_logging) {
+        // Save to log file
+        FS_Log_WriteIMUData(FS_IMU_GetData());
+    }
 }
 
-void FS_VBAT_ValueReady_Callback(void)
-{
-	if (state != FS_CONTROL_ACTIVE) return;
+void FS_VBAT_ValueReady_Callback(void) {
+    if (state != FS_CONTROL_ACTIVE)
+        return;
 
-	// Save to log file
-	FS_Log_WriteVBATData(FS_VBAT_GetData());
+    // Save to log file
+    FS_Log_WriteVBATData(FS_VBAT_GetData());
 }

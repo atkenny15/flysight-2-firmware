@@ -21,32 +21,29 @@
 **  Website: http://flysight.ca/                                          **
 ****************************************************************************/
 
-#include "main.h"
 #include "app_ble.h"
 #include "app_common.h"
 #include "led.h"
+#include "main.h"
 #include "mode.h"
 
-static void FS_PairingMode_Callback(void)
-{
-	FS_Mode_PushQueue(FS_MODE_EVENT_FORCE_UPDATE);
+static void FS_PairingMode_Callback(void) {
+    FS_Mode_PushQueue(FS_MODE_EVENT_FORCE_UPDATE);
 }
 
-void FS_PairingMode_Init(void)
-{
-	// Initialize LEDs
-	FS_LED_SetColour(FS_LED_GREEN);
-	FS_LED_Pulse();
+void FS_PairingMode_Init(void) {
+    // Initialize LEDs
+    FS_LED_SetColour(FS_LED_GREEN);
+    FS_LED_Pulse();
 
-	// Request pairing
-	APP_BLE_RequestPairing(FS_PairingMode_Callback);
+    // Request pairing
+    APP_BLE_RequestPairing(FS_PairingMode_Callback);
 }
 
-void FS_PairingMode_DeInit(void)
-{
-	// Turn off LEDs
-	FS_LED_Off();
+void FS_PairingMode_DeInit(void) {
+    // Turn off LEDs
+    FS_LED_Off();
 
-	// Cancel pairing
-	APP_BLE_CancelPairing();
+    // Cancel pairing
+    APP_BLE_CancelPairing();
 }

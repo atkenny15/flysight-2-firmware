@@ -24,11 +24,7 @@
 #ifndef LED_H_
 #define LED_H_
 
-typedef enum
-{
-	FS_LED_RED,
-	FS_LED_GREEN
-} FS_LED_Colour_t;
+typedef enum { FS_LED_RED, FS_LED_GREEN } FS_LED_Colour_t;
 
 void FS_LED_Init(void);
 void FS_LED_DeInit(void);

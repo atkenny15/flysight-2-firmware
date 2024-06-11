@@ -26,21 +26,20 @@
 
 #include "charge.h"
 
-typedef struct
-{
-	uint32_t device_id[3];
-	uint32_t session_id[3];
-	char     config_filename[13];
-	uint32_t temp_folder;
-	FS_Charge_Current_t charge_current;
-	char     device_name[30];
-	uint8_t  enable_ble;
+typedef struct {
+    uint32_t device_id[3];
+    uint32_t session_id[3];
+    char config_filename[13];
+    uint32_t temp_folder;
+    FS_Charge_Current_t charge_current;
+    char device_name[30];
+    uint8_t enable_ble;
 } FS_State_Data_t;
 
 void FS_State_Init(void);
 void FS_State_Read(void);
-const FS_State_Data_t *FS_State_Get(void);
+const FS_State_Data_t* FS_State_Get(void);
 void FS_State_NextSession(void);
-void FS_State_SetConfigFilename(const char *filename);
+void FS_State_SetConfigFilename(const char* filename);
 
 #endif /* STATE_H_ */

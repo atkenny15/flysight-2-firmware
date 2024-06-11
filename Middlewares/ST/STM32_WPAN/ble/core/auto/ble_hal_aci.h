@@ -19,18 +19,17 @@
 #ifndef BLE_HAL_ACI_H__
 #define BLE_HAL_ACI_H__
 
-
 #include "ble_types.h"
 
 /**
  * @brief ACI_HAL_GET_FW_BUILD_NUMBER
  * This command returns the build number associated with the firmware version
  * currently running
- * 
+ *
  * @param[out] Build_Number Build number of the firmware.
  * @return Value indicating success or error code.
  */
-tBleStatus aci_hal_get_fw_build_number( uint16_t* Build_Number );
+tBleStatus aci_hal_get_fw_build_number(uint16_t* Build_Number);
 
 /**
  * @brief ACI_HAL_WRITE_CONFIG_DATA
@@ -38,7 +37,7 @@ tBleStatus aci_hal_get_fw_build_number( uint16_t* Build_Number );
  * setup directly some parameters for the BLE stack.
  * Note: the static random address set by this command is taken into account by
  * the GAP only when it receives the ACI_GAP_INIT command.
- * 
+ *
  * @param Offset Offset of the element in the configuration data structure
  *        which has to be written.
  *        Values:
@@ -66,15 +65,13 @@ tBleStatus aci_hal_get_fw_build_number( uint16_t* Build_Number );
  * @param Value Data to be written
  * @return Value indicating success or error code.
  */
-tBleStatus aci_hal_write_config_data( uint8_t Offset,
-                                      uint8_t Length,
-                                      const uint8_t* Value );
+tBleStatus aci_hal_write_config_data(uint8_t Offset, uint8_t Length, const uint8_t* Value);
 
 /**
  * @brief ACI_HAL_READ_CONFIG_DATA
  * This command requests the value in the configure data structure. The number
  * of read bytes changes for different Offset.
- * 
+ *
  * @param Offset Offset of the element in the configuration data structure
  *        which has to be read.
  *        Values:
@@ -90,9 +87,7 @@ tBleStatus aci_hal_write_config_data( uint8_t Offset,
  * @param[out] Data Data field associated with Offset parameter
  * @return Value indicating success or error code.
  */
-tBleStatus aci_hal_read_config_data( uint8_t Offset,
-                                     uint8_t* Data_Length,
-                                     uint8_t* Data );
+tBleStatus aci_hal_read_config_data(uint8_t Offset, uint8_t* Data_Length, uint8_t* Data);
 
 /**
  * @brief ACI_HAL_SET_TX_POWER_LEVEL
@@ -111,7 +106,7 @@ tBleStatus aci_hal_read_config_data( uint8_t Offset,
  * advertising set, to override the value of TX power determined by
  * ACI_HAL_SET_TX_POWER_LEVEL command (e.g. see ACI_GAP_ADV_SET_CONFIGURATION).
  * Refer to Annex for the dBm corresponding values of PA_Level parameter.
- * 
+ *
  * @param En_High_Power Enable High Power mode - Deprecated and ignored
  *        Values:
  *        - 0x00: Standard Power
@@ -121,8 +116,7 @@ tBleStatus aci_hal_read_config_data( uint8_t Offset,
  *        - 0x00 ... 0x23
  * @return Value indicating success or error code.
  */
-tBleStatus aci_hal_set_tx_power_level( uint8_t En_High_Power,
-                                       uint8_t PA_Level );
+tBleStatus aci_hal_set_tx_power_level(uint8_t En_High_Power, uint8_t PA_Level);
 
 /**
  * @brief ACI_HAL_LE_TX_TEST_PACKET_NUMBER
@@ -134,12 +128,12 @@ tBleStatus aci_hal_set_tx_power_level( uint8_t En_High_Power,
  * The counter starts from 0 and counts upwards. The counter can wrap and start
  * from 0 again. The counter is not cleared until the next Direct TX test
  * starts.
- * 
+ *
  * @param[out] Number_Of_Packets Number of packets sent during the last Direct
  *        TX test.
  * @return Value indicating success or error code.
  */
-tBleStatus aci_hal_le_tx_test_packet_number( uint32_t* Number_Of_Packets );
+tBleStatus aci_hal_le_tx_test_packet_number(uint32_t* Number_Of_Packets);
 
 /**
  * @brief ACI_HAL_TONE_START
@@ -150,7 +144,7 @@ tBleStatus aci_hal_le_tx_test_packet_number( uint32_t* Number_Of_Packets );
  * This command should not be used when normal Bluetooth activities are
  * ongoing.
  * The tone should be stopped by ACI_HAL_TONE_STOP command.
- * 
+ *
  * @param RF_Channel BLE Channel ID, from 0x00 to 0x27 meaning (2.402 +
  *        0.002*0xXX) GHz
  *        Device will continuously emit 0s, that means that the tone will be at
@@ -163,23 +157,22 @@ tBleStatus aci_hal_le_tx_test_packet_number( uint32_t* Number_Of_Packets );
  *        - 0x00 ... 0xFF
  * @return Value indicating success or error code.
  */
-tBleStatus aci_hal_tone_start( uint8_t RF_Channel,
-                               uint8_t Freq_offset );
+tBleStatus aci_hal_tone_start(uint8_t RF_Channel, uint8_t Freq_offset);
 
 /**
  * @brief ACI_HAL_TONE_STOP
  * This command is used to stop the previously started ACI_HAL_TONE_START
  * command.
- * 
+ *
  * @return Value indicating success or error code.
  */
-tBleStatus aci_hal_tone_stop( void );
+tBleStatus aci_hal_tone_stop(void);
 
 /**
  * @brief ACI_HAL_GET_LINK_STATUS
  * This command returns the status of the 8 Bluetooth Low Energy links managed
  * by the device
- * 
+ *
  * @param[out] Link_Status Array of link status (8 links). Each link status is
  *        1 byte.
  *        Values:
@@ -196,8 +189,7 @@ tBleStatus aci_hal_tone_stop( void );
  *        8 links. Valid only if the link status is "connected" (0x02 or 0x05)
  * @return Value indicating success or error code.
  */
-tBleStatus aci_hal_get_link_status( uint8_t* Link_Status,
-                                    uint16_t* Link_Connection_Handle );
+tBleStatus aci_hal_get_link_status(uint8_t* Link_Status, uint16_t* Link_Connection_Handle);
 
 /**
  * @brief ACI_HAL_SET_RADIO_ACTIVITY_MASK
@@ -205,7 +197,7 @@ tBleStatus aci_hal_get_link_status( uint8_t* Link_Status,
  * ACI_HAL_END_OF_RADIO_ACTIVITY_EVENT.
  * Only the radio activities enabled in the mask will be reported to
  * application by ACI_HAL_END_OF_RADIO_ACTIVITY_EVENT
- * 
+ *
  * @param Radio_Activity_Mask Bitmask of radio events
  *        Flags:
  *        - 0x0001: Idle
@@ -223,13 +215,13 @@ tBleStatus aci_hal_get_link_status( uint8_t* Link_Status,
  *        - 0x4000: Iso central connection (only for STM32WBA)
  * @return Value indicating success or error code.
  */
-tBleStatus aci_hal_set_radio_activity_mask( uint16_t Radio_Activity_Mask );
+tBleStatus aci_hal_set_radio_activity_mask(uint16_t Radio_Activity_Mask);
 
 /**
  * @brief ACI_HAL_GET_ANCHOR_PERIOD
  * This command returns information about the Anchor Period to help application
  * in selecting slot timings when operating in multi-link scenarios.
- * 
+ *
  * @param[out] Anchor_Period Current anchor period.
  *        T = N * 0.625 ms.
  * @param[out] Max_Free_Slot Maximum available time that can be allocated for a
@@ -237,15 +229,14 @@ tBleStatus aci_hal_set_radio_activity_mask( uint16_t Radio_Activity_Mask );
  *        T = N * 0.625 ms.
  * @return Value indicating success or error code.
  */
-tBleStatus aci_hal_get_anchor_period( uint32_t* Anchor_Period,
-                                      uint32_t* Max_Free_Slot );
+tBleStatus aci_hal_get_anchor_period(uint32_t* Anchor_Period, uint32_t* Max_Free_Slot);
 
 /**
  * @brief ACI_HAL_SET_EVENT_MASK
  * This command is used to enable/disable the generation of HAL events. If the
  * bit in the Event_Mask is set to a one, then the event associated with that
  * bit will be enabled.
- * 
+ *
  * @param Event_Mask Mask to enable/disable generation of HAL events
  *        Flags:
  *        - 0x00000000: No events specified (Default)
@@ -253,40 +244,39 @@ tBleStatus aci_hal_get_anchor_period( uint32_t* Anchor_Period,
  *        - 0x00000002: ACI_HAL_SYNC_EVENT (only for STM32WBA)
  * @return Value indicating success or error code.
  */
-tBleStatus aci_hal_set_event_mask( uint32_t Event_Mask );
+tBleStatus aci_hal_set_event_mask(uint32_t Event_Mask);
 
 /**
  * @brief ACI_HAL_GET_PM_DEBUG_INFO
  * This command is used to retrieve TX, RX and total buffer count allocated for
  * ACL packets.
- * 
+ *
  * @param[out] Allocated_For_TX MBlocks allocated for TXing
  * @param[out] Allocated_For_RX MBlocks allocated for RXing
  * @param[out] Allocated_MBlocks Overall allocated MBlocks
  * @return Value indicating success or error code.
  */
-tBleStatus aci_hal_get_pm_debug_info( uint8_t* Allocated_For_TX,
-                                      uint8_t* Allocated_For_RX,
-                                      uint8_t* Allocated_MBlocks );
+tBleStatus aci_hal_get_pm_debug_info(uint8_t* Allocated_For_TX, uint8_t* Allocated_For_RX,
+                                     uint8_t* Allocated_MBlocks);
 
 /**
  * @brief ACI_HAL_SET_PERIPHERAL_LATENCY
  * This command is used to disable/enable the Peripheral latency feature during
  * a connection. Note that, by default, the Peripheral latency is enabled at
  * connection time.
- * 
+ *
  * @param Enable Enable/disable Peripheral latency.
  *        Values:
  *        - 0x00: Peripheral latency is disabled
  *        - 0x01: Peripheral latency is enabled
  * @return Value indicating success or error code.
  */
-tBleStatus aci_hal_set_peripheral_latency( uint8_t Enable );
+tBleStatus aci_hal_set_peripheral_latency(uint8_t Enable);
 
 /**
  * @brief ACI_HAL_READ_RSSI
  * This command returns the value of the RSSI.
- * 
+ *
  * @param[out] RSSI RSSI (signed integer).
  *        Units: dBm.
  *        Values:
@@ -294,43 +284,41 @@ tBleStatus aci_hal_set_peripheral_latency( uint8_t Enable );
  *        - -127 ... 20
  * @return Value indicating success or error code.
  */
-tBleStatus aci_hal_read_rssi( uint8_t* RSSI );
+tBleStatus aci_hal_read_rssi(uint8_t* RSSI);
 
 /**
  * @brief ACI_HAL_READ_RADIO_REG
  * This command Reads Register value from the RF module.
- * 
+ *
  * @param Register_Address Address of the register to be read
  * @param[out] reg_val Register value
  * @return Value indicating success or error code.
  */
-tBleStatus aci_hal_read_radio_reg( uint8_t Register_Address,
-                                   uint8_t* reg_val );
+tBleStatus aci_hal_read_radio_reg(uint8_t Register_Address, uint8_t* reg_val);
 
 /**
  * @brief ACI_HAL_WRITE_RADIO_REG
  * This command writes Register value to the RF module.
- * 
+ *
  * @param Register_Address Address of the register to be written
  * @param Register_Value Value to be written
  * @return Value indicating success or error code.
  */
-tBleStatus aci_hal_write_radio_reg( uint8_t Register_Address,
-                                    uint8_t Register_Value );
+tBleStatus aci_hal_write_radio_reg(uint8_t Register_Address, uint8_t Register_Value);
 
 /**
  * @brief ACI_HAL_READ_RAW_RSSI
  * This command returns the raw value of the RSSI.
- * 
+ *
  * @param[out] Value RAW RSSI value
  * @return Value indicating success or error code.
  */
-tBleStatus aci_hal_read_raw_rssi( uint8_t* Value );
+tBleStatus aci_hal_read_raw_rssi(uint8_t* Value);
 
 /**
  * @brief ACI_HAL_RX_START
  * This command does set up the RF to listen to a specific RF channel.
- * 
+ *
  * @param RF_Channel BLE Channel ID, from 0x00 to 0x27 meaning (2.402 +
  *        0.002*0xXX) GHz
  *        Device will continuously emit 0s, that means that the tone will be at
@@ -340,24 +328,23 @@ tBleStatus aci_hal_read_raw_rssi( uint8_t* Value );
  *        - 0x00 ... 0x27
  * @return Value indicating success or error code.
  */
-tBleStatus aci_hal_rx_start( uint8_t RF_Channel );
+tBleStatus aci_hal_rx_start(uint8_t RF_Channel);
 
 /**
  * @brief ACI_HAL_RX_STOP
  * This command stops a previous ACI_HAL_RX_START command.
- * 
+ *
  * @return Value indicating success or error code.
  */
-tBleStatus aci_hal_rx_stop( void );
+tBleStatus aci_hal_rx_stop(void);
 
 /**
  * @brief ACI_HAL_STACK_RESET
  * This command is equivalent to HCI_RESET but ensures the sleep mode is
  * entered immediately after its completion.
- * 
+ *
  * @return Value indicating success or error code.
  */
-tBleStatus aci_hal_stack_reset( void );
-
+tBleStatus aci_hal_stack_reset(void);
 
 #endif /* BLE_HAL_ACI_H__ */

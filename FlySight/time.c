@@ -28,9 +28,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 
 /** One hour, expressed in seconds */
 #define ONE_HOUR 3600
@@ -39,27 +39,25 @@
 #define ONE_DAY 86400
 
 /**
-	Enumerated labels for the months.
+    Enumerated labels for the months.
 */
 enum _MONTHS_ {
-	JANUARY,
-	FEBRUARY,
-	MARCH,
-	APRIL,
-	MAY,
-	JUNE,
-	JULY,
-	AUGUST,
-	SEPTEMBER,
-	OCTOBER,
-	NOVEMBER,
-	DECEMBER
+    JANUARY,
+    FEBRUARY,
+    MARCH,
+    APRIL,
+    MAY,
+    JUNE,
+    JULY,
+    AUGUST,
+    SEPTEMBER,
+    OCTOBER,
+    NOVEMBER,
+    DECEMBER
 };
 
-unsigned char
-is_leap_year(int year)
-{
-    div_t           d;
+unsigned char is_leap_year(int year) {
+    div_t d;
 
     /* year must be divisible by 4 to be a leap year */
     if (year & 3)
@@ -83,17 +81,16 @@ is_leap_year(int year)
 
 */
 
-uint32_t
-mk_gmtime(uint16_t year, uint8_t mon, uint8_t mday, uint8_t hour, uint8_t min, uint8_t sec)
-{
+uint32_t mk_gmtime(uint16_t year, uint8_t mon, uint8_t mday, uint8_t hour, uint8_t min,
+                   uint8_t sec) {
 
-    uint32_t        ret;
-    uint32_t        tmp;
-    int             n, m, d, leaps;
+    uint32_t ret;
+    uint32_t tmp;
+    int n, m, d, leaps;
 
     /*
-        Determine elapsed whole days since the epoch to the beginning of this year. Since our epoch is
-        at a conjunction of the leap cycles, we can do this rather quickly.
+        Determine elapsed whole days since the epoch to the beginning of this year. Since our epoch
+       is at a conjunction of the leap cycles, we can do this rather quickly.
         */
     n = year - 2000;
     leaps = 0;
@@ -106,18 +103,18 @@ mk_gmtime(uint16_t year, uint8_t mon, uint8_t mday, uint8_t hour, uint8_t min, u
     tmp = 365UL * n + leaps;
 
     /*
-                Derive the day of year from month and day of month. We use the pattern of 31 day months
-                followed by 30 day months to our advantage, but we must 'special case' Jan/Feb, and
+                Derive the day of year from month and day of month. We use the pattern of 31 day
+       months followed by 30 day months to our advantage, but we must 'special case' Jan/Feb, and
                 account for a 'phase change' between July and August (153 days after March 1).
             */
-    d = mday - 1;   /* tm_mday is one based */
+    d = mday - 1; /* tm_mday is one based */
 
     /* handle Jan/Feb as a special case */
     if (mon - 1 < 2) {
         if (mon - 1)
             d += 31;
-
-    } else {
+    }
+    else {
         n = 59 + is_leap_year(year);
         d += n;
         n = mon - 1 - MARCH;
@@ -159,13 +156,12 @@ mk_gmtime(uint16_t year, uint8_t mon, uint8_t mday, uint8_t hour, uint8_t min, u
     return ret;
 }
 
-void
-gmtime_r(const uint32_t timer, uint16_t *year, uint8_t *mon, uint8_t *mday, uint8_t *hour, uint8_t *min, uint8_t *sec)
-{
-    int32_t         fract;
-    ldiv_t          lresult;
-    div_t           result;
-    uint16_t        days, n, leapyear, years;
+void gmtime_r(const uint32_t timer, uint16_t* year, uint8_t* mon, uint8_t* mday, uint8_t* hour,
+              uint8_t* min, uint8_t* sec) {
+    int32_t fract;
+    ldiv_t lresult;
+    div_t result;
+    uint16_t days, n, leapyear, years;
 
     /* break down timer into whole and fractional parts of 1 day */
     days = timer / 86400UL;
@@ -181,15 +177,15 @@ gmtime_r(const uint32_t timer, uint16_t *year, uint8_t *mon, uint8_t *mday, uint
     *hour = result.quot;
 
     /*
-        * Our epoch year has the property of being at the conjunction of all three 'leap cycles',
-        * 4, 100, and 400 years ( though we can ignore the 400 year cycle in this library).
-        *
-        * Using this property, we can easily 'map' the time stamp into the leap cycles, quickly
-        * deriving the year and day of year, along with the fact of whether it is a leap year.
-        */
+     * Our epoch year has the property of being at the conjunction of all three 'leap cycles',
+     * 4, 100, and 400 years ( though we can ignore the 400 year cycle in this library).
+     *
+     * Using this property, we can easily 'map' the time stamp into the leap cycles, quickly
+     * deriving the year and day of year, along with the fact of whether it is a leap year.
+     */
 
     /* map into a 100 year cycle */
-    lresult = ldiv((long) days, 36525L);
+    lresult = ldiv((long)days, 36525L);
     years = 100 * lresult.quot;
 
     /* map into a 4 year cycle */
@@ -200,9 +196,9 @@ gmtime_r(const uint32_t timer, uint16_t *year, uint8_t *mon, uint8_t *mday, uint
         days++;
 
     /*
-         * 'years' is now at the first year of a 4 year leap cycle, which will always be a leap year,
-         * unless it is 100. 'days' is now an index into that cycle.
-         */
+     * 'years' is now at the first year of a 4 year leap cycle, which will always be a leap year,
+     * unless it is 100. 'days' is now an index into that cycle.
+     */
     leapyear = 1;
     if (years == 100)
         leapyear = 0;
@@ -234,7 +230,8 @@ gmtime_r(const uint32_t timer, uint16_t *year, uint8_t *mon, uint8_t *mday, uint
         result = div(days, 31);
         *mon = result.quot;
         *mday = result.rem;
-    } else {
+    }
+    else {
         /*
             The remaining 10 months form a regular pattern of 31 day months alternating with 30 day
             months, with a 'phase change' between July and August (153 days after March 1).
@@ -257,7 +254,6 @@ gmtime_r(const uint32_t timer, uint16_t *year, uint8_t *mon, uint8_t *mday, uint
     /*
             Cleanup and return
         */
-    (*mon)++; /* mon is 1 based */
+    (*mon)++;  /* mon is 1 based */
     (*mday)++; /* mday is 1 based */
-
 }

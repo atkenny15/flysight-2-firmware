@@ -21,34 +21,28 @@
 **  Website: http://flysight.ca/                                          **
 ****************************************************************************/
 
-#include "main.h"
 #include "app_fatfs.h"
 #include "audio.h"
 #include "config.h"
 #include "led.h"
+#include "main.h"
 #include "mode.h"
 #include "resource_manager.h"
 #include "state.h"
 #include "stm32_seq.h"
 
-#define PLAY_TIMER_MSEC    10
-#define PLAY_TIMER_TICKS   (PLAY_TIMER_MSEC*1000/CFG_TS_TICK_VAL)
+#define PLAY_TIMER_MSEC 10
+#define PLAY_TIMER_TICKS (PLAY_TIMER_MSEC * 1000 / CFG_TS_TICK_VAL)
 
-#define WAIT_TIMER_MSEC    500
-#define WAIT_TIMER_TICKS   (WAIT_TIMER_MSEC*1000/CFG_TS_TICK_VAL)
+#define WAIT_TIMER_MSEC 500
+#define WAIT_TIMER_TICKS (WAIT_TIMER_MSEC * 1000 / CFG_TS_TICK_VAL)
 
 static DIR dir;
 static FIL file;
 
 static uint8_t timer_id;
 
-typedef enum
-{
-	STATE_IDLE,
-	STATE_PLAY,
-	STATE_WAIT,
-	STATE_DONE
-} State_t;
+typedef enum { STATE_IDLE, STATE_PLAY, STATE_WAIT, STATE_DONE } State_t;
 
 static State_t state = STATE_IDLE;
 
@@ -56,164 +50,147 @@ static char config_filename[13];
 
 extern SPI_HandleTypeDef hspi2;
 
-static void updateTimer(void)
-{
-	// Call update task
-	UTIL_SEQ_SetTask(1<<CFG_TASK_FS_CONFIG_UPDATE_ID, CFG_SCH_PRIO_1);
+static void updateTimer(void) {
+    // Call update task
+    UTIL_SEQ_SetTask(1 << CFG_TASK_FS_CONFIG_UPDATE_ID, CFG_SCH_PRIO_1);
 }
 
-static void readSingleConfigName(
-	char *fname)
-{
-	char    buffer[100];
-	size_t  len;
+static void readSingleConfigName(char* fname) {
+    char buffer[100];
+    size_t len;
 
-	char    *name;
-	char    *result;
-	char    filename[13];
+    char* name;
+    char* result;
+    char filename[13];
 
-	if (f_chdir("/config") != FR_OK)
-		return;
+    if (f_chdir("/config") != FR_OK)
+        return;
 
-	if (f_open(&file, fname, FA_READ) != FR_OK)
-		return;
+    if (f_open(&file, fname, FA_READ) != FR_OK)
+        return;
 
-	while (!f_eof(&file))
-	{
-		f_gets(buffer, sizeof(buffer), &file);
+    while (!f_eof(&file)) {
+        f_gets(buffer, sizeof(buffer), &file);
 
-		len = strcspn(buffer, ";");
-		buffer[len] = '\0';
+        len = strcspn(buffer, ";");
+        buffer[len] = '\0';
 
-		name = strtok(buffer, " \r\n\t:");
-		if (name == 0) continue ;
+        name = strtok(buffer, " \r\n\t:");
+        if (name == 0)
+            continue;
 
-		result = strtok(0, " \r\n\t:");
-		if (result == 0) continue ;
+        result = strtok(0, " \r\n\t:");
+        if (result == 0)
+            continue;
 
-		if (!strcmp(name, "Init_File"))
-		{
-			filename[0] = '\0';
+        if (!strcmp(name, "Init_File")) {
+            filename[0] = '\0';
 
-			strncat(filename, result, sizeof(filename) - 1);
-			strncat(filename, ".wav", sizeof(filename) - 1);
+            strncat(filename, result, sizeof(filename) - 1);
+            strncat(filename, ".wav", sizeof(filename) - 1);
 
-			FS_Audio_Play(filename, FS_Config_Get()->sp_volume * 5);
-		}
-	}
+            FS_Audio_Play(filename, FS_Config_Get()->sp_volume * 5);
+        }
+    }
 
-	f_close(&file);
+    f_close(&file);
 }
 
-static void updateTask(void)
-{
-	FILINFO fno;
+static void updateTask(void) {
+    FILINFO fno;
 
-	if (state == STATE_PLAY)
-	{
-		if (FS_Audio_IsIdle())
-		{
-			state = STATE_WAIT;
-			HW_TS_Start(timer_id, WAIT_TIMER_TICKS);
-		}
-		else
-		{
-			HW_TS_Start(timer_id, PLAY_TIMER_TICKS);
-		}
-	}
-	else
-	{
-		State_t next_state = STATE_DONE;
+    if (state == STATE_PLAY) {
+        if (FS_Audio_IsIdle()) {
+            state = STATE_WAIT;
+            HW_TS_Start(timer_id, WAIT_TIMER_TICKS);
+        }
+        else {
+            HW_TS_Start(timer_id, PLAY_TIMER_TICKS);
+        }
+    }
+    else {
+        State_t next_state = STATE_DONE;
 
-		if (f_readdir(&dir, &fno) == FR_OK)
-		{
-			if ((fno.fname[0] != 0) &&
-					(fno.fname[0] != '.') &&
-					!(fno.fattrib & AM_DIR))
-			{
-				// Update current config file
-				strncpy(config_filename, fno.fname, sizeof(config_filename));
+        if (f_readdir(&dir, &fno) == FR_OK) {
+            if ((fno.fname[0] != 0) && (fno.fname[0] != '.') && !(fno.fattrib & AM_DIR)) {
+                // Update current config file
+                strncpy(config_filename, fno.fname, sizeof(config_filename));
 
-				// Play init file
-				readSingleConfigName(fno.fname);
+                // Play init file
+                readSingleConfigName(fno.fname);
 
-				// Update state
-				next_state = STATE_PLAY;
-				HW_TS_Start(timer_id, PLAY_TIMER_TICKS);
-			}
-		}
+                // Update state
+                next_state = STATE_PLAY;
+                HW_TS_Start(timer_id, PLAY_TIMER_TICKS);
+            }
+        }
 
-		state = next_state;
-	}
+        state = next_state;
+    }
 
-	if (state == STATE_DONE)
-	{
-		// Update current config file
-		config_filename[0] = 0;
+    if (state == STATE_DONE) {
+        // Update current config file
+        config_filename[0] = 0;
 
-		// Exit config mode
-		FS_Mode_PushQueue(FS_MODE_EVENT_FORCE_UPDATE);
-	}
+        // Exit config mode
+        FS_Mode_PushQueue(FS_MODE_EVENT_FORCE_UPDATE);
+    }
 }
 
-void FS_ConfigMode_Init(void)
-{
-	/* Initialize FatFS */
-	FS_ResourceManager_RequestResource(FS_RESOURCE_FATFS);
+void FS_ConfigMode_Init(void) {
+    /* Initialize FatFS */
+    FS_ResourceManager_RequestResource(FS_RESOURCE_FATFS);
 
-	// Turn on green LED
-	FS_LED_SetColour(FS_LED_GREEN);
-	FS_LED_On();
+    // Turn on green LED
+    FS_LED_SetColour(FS_LED_GREEN);
+    FS_LED_On();
 
-	// Initialize configuration
-	FS_Config_Init();
-	FS_Config_Read("/config.txt");
+    // Initialize configuration
+    FS_Config_Init();
+    FS_Config_Read("/config.txt");
 
-	// Initialize audio
-	FS_Audio_Init();
+    // Initialize audio
+    FS_Audio_Init();
 
-	// Initialize update task
-	UTIL_SEQ_RegTask(1<<CFG_TASK_FS_CONFIG_UPDATE_ID, UTIL_SEQ_RFU, updateTask);
+    // Initialize update task
+    UTIL_SEQ_RegTask(1 << CFG_TASK_FS_CONFIG_UPDATE_ID, UTIL_SEQ_RFU, updateTask);
 
-	// Initialize update timer
-	HW_TS_Create(CFG_TIM_PROC_ID_ISR, &timer_id, hw_ts_SingleShot, updateTimer);
+    // Initialize update timer
+    HW_TS_Create(CFG_TIM_PROC_ID_ISR, &timer_id, hw_ts_SingleShot, updateTimer);
 
-	if (f_opendir(&dir, "/config") == FR_OK)
-	{
-		// Start the state machine
-		state = STATE_WAIT;
-		updateTask();
-	}
-	else
-	{
-		// Update current config file
-		config_filename[0] = 0;
+    if (f_opendir(&dir, "/config") == FR_OK) {
+        // Start the state machine
+        state = STATE_WAIT;
+        updateTask();
+    }
+    else {
+        // Update current config file
+        config_filename[0] = 0;
 
-		// Exit config mode
-		FS_Mode_PushQueue(FS_MODE_EVENT_FORCE_UPDATE);
-	}
+        // Exit config mode
+        FS_Mode_PushQueue(FS_MODE_EVENT_FORCE_UPDATE);
+    }
 }
 
-void FS_ConfigMode_DeInit(void)
-{
-	// Turn off LEDs
-	FS_LED_Off();
+void FS_ConfigMode_DeInit(void) {
+    // Turn off LEDs
+    FS_LED_Off();
 
-	// Close directory
-	f_closedir(&dir);
+    // Close directory
+    f_closedir(&dir);
 
-	// Delete update timer
-	HW_TS_Delete(timer_id);
+    // Delete update timer
+    HW_TS_Delete(timer_id);
 
-	// Disable audio
-	FS_Audio_DeInit();
+    // Disable audio
+    FS_Audio_DeInit();
 
-	// Update configuration filename
-	FS_State_SetConfigFilename(config_filename);
+    // Update configuration filename
+    FS_State_SetConfigFilename(config_filename);
 
-	/* De-initialize FatFS */
-	FS_ResourceManager_ReleaseResource(FS_RESOURCE_FATFS);
+    /* De-initialize FatFS */
+    FS_ResourceManager_ReleaseResource(FS_RESOURCE_FATFS);
 
-	// Reset state
-	state = STATE_IDLE;
+    // Reset state
+    state = STATE_IDLE;
 }

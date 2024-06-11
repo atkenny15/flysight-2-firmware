@@ -21,7 +21,6 @@
 **  Website: http://flysight.ca/                                          **
 ****************************************************************************/
 
-#include "main.h"
 #include "active_control.h"
 #include "app_common.h"
 #include "app_fatfs.h"
@@ -34,6 +33,7 @@
 #include "imu.h"
 #include "log.h"
 #include "mag.h"
+#include "main.h"
 #include "resource_manager.h"
 #include "sensor.h"
 #include "state.h"
@@ -42,207 +42,181 @@
 extern UART_HandleTypeDef huart1;
 extern ADC_HandleTypeDef hadc1;
 
-void FS_ActiveMode_Init(void)
-{
-	/* Initialize FatFS */
-	FS_ResourceManager_RequestResource(FS_RESOURCE_FATFS);
+void FS_ActiveMode_Init(void) {
+    /* Initialize FatFS */
+    FS_ResourceManager_RequestResource(FS_RESOURCE_FATFS);
 
-	/* Read persistent state */
-	FS_State_NextSession();
+    /* Read persistent state */
+    FS_State_NextSession();
 
-	/* Initialize controller */
-	FS_ActiveControl_Init();
+    /* Initialize controller */
+    FS_ActiveControl_Init();
 
-	/* Initialize configuration */
-	FS_Config_Init();
-	if (FS_Config_Read("/config.txt") != FS_CONFIG_OK)
-	{
-		FS_Config_Write("/config.txt");
-	}
+    /* Initialize configuration */
+    FS_Config_Init();
+    if (FS_Config_Read("/config.txt") != FS_CONFIG_OK) {
+        FS_Config_Write("/config.txt");
+    }
 
-	/* Read selectable config */
-	if (f_chdir("/config") == FR_OK)
-	{
-		FS_Config_Read(FS_State_Get()->config_filename);
-	}
+    /* Read selectable config */
+    if (f_chdir("/config") == FR_OK) {
+        FS_Config_Read(FS_State_Get()->config_filename);
+    }
 
-	if (FS_Config_Get()->enable_logging)
-	{
-		// Enable logging
-		FS_Log_Init(FS_State_Get()->temp_folder);
+    if (FS_Config_Get()->enable_logging) {
+        // Enable logging
+        FS_Log_Init(FS_State_Get()->temp_folder);
 
-		// Log timer usage adjusted for:
-		//   - FS_Control_Init
-		//   - FS_Log_Init
-		FS_Log_WriteEvent("%lu/%lu timers used before active mode initialization",
-				HW_TS_CountUsed() - 2, CFG_HW_TS_MAX_NBR_CONCURRENT_TIMER);
-	}
+        // Log timer usage adjusted for:
+        //   - FS_Control_Init
+        //   - FS_Log_Init
+        FS_Log_WriteEvent("%lu/%lu timers used before active mode initialization",
+                          HW_TS_CountUsed() - 2, CFG_HW_TS_MAX_NBR_CONCURRENT_TIMER);
+    }
 
-	if (FS_Config_Get()->enable_audio)
-	{
-		/* Initialize audio */
-		FS_Audio_Init();
+    if (FS_Config_Get()->enable_audio) {
+        /* Initialize audio */
+        FS_Audio_Init();
 
-		// Enable audio control
-		FS_AudioControl_Init();
-	}
+        // Enable audio control
+        FS_AudioControl_Init();
+    }
 
-	if (FS_Config_Get()->enable_vbat || FS_Config_Get()->enable_mic)
-	{
-		// Enable ADC
-		MX_ADC1_Init();
+    if (FS_Config_Get()->enable_vbat || FS_Config_Get()->enable_mic) {
+        // Enable ADC
+        MX_ADC1_Init();
 
-		// Run the ADC calibration in single-ended mode
-		if (HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED) != HAL_OK)
-		{
-			// Calibration Error
-			Error_Handler();
-		}
-	}
+        // Run the ADC calibration in single-ended mode
+        if (HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED) != HAL_OK) {
+            // Calibration Error
+            Error_Handler();
+        }
+    }
 
-	if (FS_Config_Get()->enable_vbat)
-	{
-		// Enable battery measurement
-		FS_VBAT_Init();
-	}
+    if (FS_Config_Get()->enable_vbat) {
+        // Enable battery measurement
+        FS_VBAT_Init();
+    }
 
-	if (FS_Config_Get()->enable_mic)
-	{
-		// Enable microphone
-		HAL_GPIO_WritePin(MIC_EN_GPIO_Port, MIC_EN_Pin, GPIO_PIN_SET);
-	}
+    if (FS_Config_Get()->enable_mic) {
+        // Enable microphone
+        HAL_GPIO_WritePin(MIC_EN_GPIO_Port, MIC_EN_Pin, GPIO_PIN_SET);
+    }
 
-	if (FS_Config_Get()->enable_imu)
-	{
-		/* Start IMU */
-		FS_IMU_Start();
-	}
+    if (FS_Config_Get()->enable_imu) {
+        /* Start IMU */
+        FS_IMU_Start();
+    }
 
-	/* Enable USART */
-	MX_USART1_UART_Init();
+    /* Enable USART */
+    MX_USART1_UART_Init();
 
-	/* Initialize GNSS */
-	FS_GNSS_Init();
+    /* Initialize GNSS */
+    FS_GNSS_Init();
 
-	if (FS_Config_Get()->enable_gnss)
-	{
-		/* Start GNSS */
-		FS_GNSS_Start();
-	}
-	else
-	{
-		/* Stop GNSS */
-		FS_GNSS_Stop();
-	}
+    if (FS_Config_Get()->enable_gnss) {
+        /* Start GNSS */
+        FS_GNSS_Start();
+    }
+    else {
+        /* Stop GNSS */
+        FS_GNSS_Stop();
+    }
 
-	if (FS_Config_Get()->enable_baro)
-	{
-		/* Start barometer */
-		FS_Baro_Start();
-	}
+    if (FS_Config_Get()->enable_baro) {
+        /* Start barometer */
+        FS_Baro_Start();
+    }
 
-	if (FS_Config_Get()->enable_hum)
-	{
-		/* Start humidity and temperature */
-		FS_Hum_Start();
-	}
+    if (FS_Config_Get()->enable_hum) {
+        /* Start humidity and temperature */
+        FS_Hum_Start();
+    }
 
-	if (FS_Config_Get()->enable_mag)
-	{
-		/* Start magnetometer */
-		FS_Mag_Start();
-	}
+    if (FS_Config_Get()->enable_mag) {
+        /* Start magnetometer */
+        FS_Mag_Start();
+    }
 
-	if (FS_Config_Get()->enable_baro || FS_Config_Get()->enable_hum || FS_Config_Get()->enable_mag)
-	{
-		/* Start reading sensors */
-		FS_Sensor_Start();
-	}
+    if (FS_Config_Get()->enable_baro || FS_Config_Get()->enable_hum ||
+        FS_Config_Get()->enable_mag) {
+        /* Start reading sensors */
+        FS_Sensor_Start();
+    }
 }
 
-void FS_ActiveMode_DeInit(void)
-{
-	/* Disable controller */
-	FS_ActiveControl_DeInit();
+void FS_ActiveMode_DeInit(void) {
+    /* Disable controller */
+    FS_ActiveControl_DeInit();
 
-	if (FS_Config_Get()->enable_baro || FS_Config_Get()->enable_hum || FS_Config_Get()->enable_mag)
-	{
-		/* Stop reading sensors */
-		FS_Sensor_Stop();
-	}
+    if (FS_Config_Get()->enable_baro || FS_Config_Get()->enable_hum ||
+        FS_Config_Get()->enable_mag) {
+        /* Stop reading sensors */
+        FS_Sensor_Stop();
+    }
 
-	if (FS_Config_Get()->enable_mag)
-	{
-		/* Stop magnetometer */
-		FS_Mag_Stop();
-	}
+    if (FS_Config_Get()->enable_mag) {
+        /* Stop magnetometer */
+        FS_Mag_Stop();
+    }
 
-	if (FS_Config_Get()->enable_hum)
-	{
-		/* Stop humidity and temperature */
-		FS_Hum_Stop();
-	}
+    if (FS_Config_Get()->enable_hum) {
+        /* Stop humidity and temperature */
+        FS_Hum_Stop();
+    }
 
-	if (FS_Config_Get()->enable_baro)
-	{
-		/* Stop barometer */
-		FS_Baro_Stop();
-	}
+    if (FS_Config_Get()->enable_baro) {
+        /* Stop barometer */
+        FS_Baro_Stop();
+    }
 
-	/* Disable GNSS */
-	FS_GNSS_DeInit();
+    /* Disable GNSS */
+    FS_GNSS_DeInit();
 
-	/* Disable USART */
-	HAL_UART_DeInit(&huart1);
+    /* Disable USART */
+    HAL_UART_DeInit(&huart1);
 
-	if (FS_Config_Get()->enable_imu)
-	{
-		/* Stop IMU */
-		FS_IMU_Stop();
-	}
+    if (FS_Config_Get()->enable_imu) {
+        /* Stop IMU */
+        FS_IMU_Stop();
+    }
 
-	if (FS_Config_Get()->enable_mic)
-	{
-		// Disable microphone
-		HAL_GPIO_WritePin(MIC_EN_GPIO_Port, MIC_EN_Pin, GPIO_PIN_RESET);
-	}
+    if (FS_Config_Get()->enable_mic) {
+        // Disable microphone
+        HAL_GPIO_WritePin(MIC_EN_GPIO_Port, MIC_EN_Pin, GPIO_PIN_RESET);
+    }
 
-	if (FS_Config_Get()->enable_vbat)
-	{
-		// Disable battery measurement
-		FS_VBAT_DeInit();
-	}
+    if (FS_Config_Get()->enable_vbat) {
+        // Disable battery measurement
+        FS_VBAT_DeInit();
+    }
 
-	if (FS_Config_Get()->enable_vbat || FS_Config_Get()->enable_mic)
-	{
-		// Disable ADC
-		if (HAL_ADC_DeInit(&hadc1) != HAL_OK)
-		{
-			Error_Handler();
-		}
-	}
+    if (FS_Config_Get()->enable_vbat || FS_Config_Get()->enable_mic) {
+        // Disable ADC
+        if (HAL_ADC_DeInit(&hadc1) != HAL_OK) {
+            Error_Handler();
+        }
+    }
 
-	if (FS_Config_Get()->enable_audio)
-	{
-		// Disable audio control
-		FS_AudioControl_DeInit();
+    if (FS_Config_Get()->enable_audio) {
+        // Disable audio control
+        FS_AudioControl_DeInit();
 
-		// Disable audio
-		FS_Audio_DeInit();
-	}
+        // Disable audio
+        FS_Audio_DeInit();
+    }
 
-	if (FS_Config_Get()->enable_logging)
-	{
-		// Log timer usage adjusted for:
-		//   - FS_Log_DeInit
-		FS_Log_WriteEvent("----------");
-		FS_Log_WriteEvent("%lu/%lu timers used after active mode de-initialization",
-				HW_TS_CountUsed() - 1, CFG_HW_TS_MAX_NBR_CONCURRENT_TIMER);
+    if (FS_Config_Get()->enable_logging) {
+        // Log timer usage adjusted for:
+        //   - FS_Log_DeInit
+        FS_Log_WriteEvent("----------");
+        FS_Log_WriteEvent("%lu/%lu timers used after active mode de-initialization",
+                          HW_TS_CountUsed() - 1, CFG_HW_TS_MAX_NBR_CONCURRENT_TIMER);
 
-		// Disable logging
-		FS_Log_DeInit(FS_State_Get()->temp_folder);
-	}
+        // Disable logging
+        FS_Log_DeInit(FS_State_Get()->temp_folder);
+    }
 
-	/* De-initialize FatFS */
-	FS_ResourceManager_ReleaseResource(FS_RESOURCE_FATFS);
+    /* De-initialize FatFS */
+    FS_ResourceManager_ReleaseResource(FS_RESOURCE_FATFS);
 }

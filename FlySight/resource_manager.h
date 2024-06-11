@@ -24,20 +24,18 @@
 #ifndef RESOURCE_MANAGER_H_
 #define RESOURCE_MANAGER_H_
 
-typedef enum
-{
-	FS_RESOURCE_VCC,
-	FS_RESOURCE_MICROSD,
-	FS_RESOURCE_FATFS,
+typedef enum {
+    FS_RESOURCE_VCC,
+    FS_RESOURCE_MICROSD,
+    FS_RESOURCE_FATFS,
 
-	// Number of resources
-	FS_RESOURCE_COUNT
+    // Number of resources
+    FS_RESOURCE_COUNT
 } FS_Resource_t;
 
-typedef enum
-{
-	FS_RESOURCE_MANAGER_SUCCESS,
-	FS_RESOURCE_MANAGER_FAILURE
+typedef enum {
+    FS_RESOURCE_MANAGER_SUCCESS,
+    FS_RESOURCE_MANAGER_FAILURE
 } FS_ResourceManager_Result_t;
 
 void FS_ResourceManager_Init(void);

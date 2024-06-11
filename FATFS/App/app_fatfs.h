@@ -61,13 +61,13 @@ int32_t MX_FATFS_DeInit(void);
 
 /* Private defines -----------------------------------------------------------*/
 /* USER CODE BEGIN Private defines */
-#define APP_OK                      0
-#define APP_ERROR                  -1
-#define APP_SD_UNPLUGGED           -2
+#define APP_OK 0
+#define APP_ERROR -1
+#define APP_SD_UNPLUGGED -2
 /* USER CODE END Private defines */
 
-extern FATFS USERFatFs;    /* File system object for USER logical drive */
-extern FIL USERFile;       /* File  object for USER */
-extern char USERPath[4];   /* USER logical drive path */
+extern FATFS USERFatFs;  /* File system object for USER logical drive */
+extern FIL USERFile;     /* File  object for USER */
+extern char USERPath[4]; /* USER logical drive path */
 
 #endif /*__APP_FATFS_H */

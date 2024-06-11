@@ -26,6 +26,6 @@
 
 void FS_ConfigMode_Init(void);
 void FS_ConfigMode_DeInit(void);
-const char *FS_ConfigMode_GetConfigFilename(void);
+const char* FS_ConfigMode_GetConfigFilename(void);
 
 #endif /* CONFIG_MODE_H_ */

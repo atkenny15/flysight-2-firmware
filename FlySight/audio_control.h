@@ -28,6 +28,6 @@
 
 void FS_AudioControl_Init(void);
 void FS_AudioControl_DeInit(void);
-void FS_AudioControl_UpdateGNSS(const FS_GNSS_Data_t *current);
+void FS_AudioControl_UpdateGNSS(const FS_GNSS_Data_t* current);
 
 #endif /* AUDIO_CONTROL_H_ */

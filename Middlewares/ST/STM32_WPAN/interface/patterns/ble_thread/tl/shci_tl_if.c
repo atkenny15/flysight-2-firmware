@@ -19,12 +19,10 @@
 #include "shci_tl.h"
 #include "tl.h"
 
+void shci_register_io_bus(tSHciIO* fops) {
+    /* Register IO bus services */
+    fops->Init = TL_SYS_Init;
+    fops->Send = TL_SYS_SendCmd;
 
-void shci_register_io_bus(tSHciIO* fops)
-{
-  /* Register IO bus services */
-  fops->Init    = TL_SYS_Init;
-  fops->Send    = TL_SYS_SendCmd;
-
-  return;
+    return;
 }
