@@ -1,0 +1,7 @@
+black
+bleak
+isort
+mypy
+ruff
+tqdm
+types-tqdm

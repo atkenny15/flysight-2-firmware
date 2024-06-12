@@ -2,10 +2,10 @@ import argparse
 import asyncio
 import os
 import random
-from datetime import datetime
 from struct import unpack
+from typing import Any, Optional
 
-from bleak import BleakClient, BleakScanner
+from bleak import BleakClient, BleakScanner, BLEDevice  # type: ignore
 from tqdm import tqdm
 
 # UUIDs for the CRS characteristics
@@ -23,37 +23,43 @@ ble_adapter = None
 # Flow control parameters
 WINDOW_LENGTH = 8
 FRAME_LENGTH = 242
-TX_TIMEOUT = 1
-RX_TIMEOUT = 1
+TX_TIMEOUT = 10
+RX_TIMEOUT = 10
 
 
-async def mkdir(address, directory_name):
-    async with BleakClient(address, adapter=ble_adapter) as client:
+async def mkdir(address: str, flysight_name: str, directory_name: str) -> None:
+    device = await get_flysight_device(address, flysight_name)
+    async with BleakClient(device, adapter=ble_adapter) as client:
         await client.pair(protection_level=2)
         await client.write_gatt_char(
             CRS_RX_UUID, b"\x04" + directory_name.encode(), response=False
         )
 
 
-async def create_file(address, file_name):
-    async with BleakClient(address, adapter=ble_adapter) as client:
+async def create_file(address: str, flysight_name: str, file_name: str) -> None:
+    device = await get_flysight_device(address, flysight_name)
+    async with BleakClient(device, adapter=ble_adapter) as client:
         await client.pair(protection_level=2)
         await client.write_gatt_char(
             CRS_RX_UUID, b"\x00" + file_name.encode(), response=False
         )
 
 
-async def delete_file(address, file_name):
-    async with BleakClient(address, adapter=ble_adapter) as client:
+async def delete_file(address: str, flysight_name: str, file_name: str) -> None:
+    device = await get_flysight_device(address, flysight_name)
+    async with BleakClient(device, adapter=ble_adapter) as client:
         await client.pair(protection_level=2)
         await client.write_gatt_char(
             CRS_RX_UUID, b"\x01" + file_name.encode(), response=False
         )
 
 
-async def write_file(address, local_filename, remote_filename):
+async def write_file(
+    address: str, flysight_name: str, local_filename: str, remote_filename: str
+) -> None:
+    device = await get_flysight_device(address, flysight_name)
     with tqdm(desc="Sending Bytes", unit="B", unit_scale=True) as pbar:
-        async with BleakClient(address, adapter=ble_adapter) as client:
+        async with BleakClient(device, adapter=ble_adapter) as client:
             with open(local_filename, "rb") as f:
                 data = f.read()
 
@@ -63,7 +69,7 @@ async def write_file(address, local_filename, remote_filename):
             next_ack_bytes = 0
             ack_received = asyncio.Event()
 
-            def file_notification_handler(sender, data):
+            def file_notification_handler(sender: Any, data: Any) -> None:
                 nonlocal next_ack_num, next_ack_bytes, ack_received
                 if data[0] == 0x12:
                     ack_num = int.from_bytes(
@@ -118,16 +124,23 @@ async def write_file(address, local_filename, remote_filename):
 
 
 async def read_file(
-    address, offset, stride, remote_filename, local_filename, test_mode=False
-):
+    address: str,
+    flysight_name: str,
+    offset: int,
+    stride: int,
+    remote_filename: str,
+    local_filename: str,
+    test_mode: bool = False,
+) -> None:
+    device = await get_flysight_device(address, flysight_name)
     with tqdm(desc="Receiving Bytes", unit="B", unit_scale=True) as pbar:
-        async with BleakClient(address, adapter=ble_adapter) as client:
+        async with BleakClient(device, adapter=ble_adapter) as client:
             file_data = bytearray()
             transfer_complete = asyncio.Event()
             packet_received = asyncio.Event()
             next_packet_num = 0
 
-            async def file_notification_handler(sender, data):
+            async def file_notification_handler(sender: Any, data: Any) -> None:
                 nonlocal file_data, packet_received, next_packet_num
                 if data[0] == 0x10:
                     packet_num = int.from_bytes(data[1:2], byteorder="little")
@@ -178,7 +191,7 @@ async def read_file(
                 f.write(file_data)
 
 
-def get_attrib_text(fattrib):
+def get_attrib_text(fattrib: int) -> str:
     descriptions = []
     for bit in attrib_description:
         if fattrib & (1 << bit):
@@ -188,7 +201,7 @@ def get_attrib_text(fattrib):
     return "".join(descriptions)
 
 
-def parse_filinfo(data):
+def parse_filinfo(data: bytes) -> Optional[str]:
     fsize, fdate, ftime, fattrib, fname = unpack("<IHHB13s", data)
 
     # Extracting filename
@@ -216,11 +229,12 @@ def parse_filinfo(data):
     )
 
 
-async def list_directory(address, directory):
-    async with BleakClient(address, adapter=ble_adapter) as client:
+async def list_directory(address: str, flysight_name: str, directory: str) -> None:
+    device = await get_flysight_device(address, flysight_name)
+    async with BleakClient(device, adapter=ble_adapter) as client:
         next_packet_num = 0
 
-        async def dir_notification_handler(sender, data):
+        async def dir_notification_handler(sender: Any, data: Any) -> None:
             nonlocal next_packet_num
             if data[0] == 0x11:
                 packet_num = int.from_bytes(data[1:2], byteorder="little")
@@ -230,10 +244,10 @@ async def list_directory(address, directory):
                         print(parsed_info)
                     next_packet_num += 1
                 else:
-                    print(f"Error: Dropped packet.")
+                    print("Error: Dropped packet.")
                     return
 
-        await client.pair(protection_level=2)
+        # await client.pair(protection_level=2)
         await client.start_notify(CRS_TX_UUID, dir_notification_handler)
         await client.write_gatt_char(
             CRS_RX_UUID, b"\x05" + directory.encode(), response=False
@@ -242,10 +256,11 @@ async def list_directory(address, directory):
         await client.stop_notify(CRS_TX_UUID)
 
 
-async def display_gnss(address):
-    async with BleakClient(address, adapter=ble_adapter) as client:
+async def display_gnss(address: str, flysight_name: str) -> None:
+    device = await get_flysight_device(address, flysight_name)
+    async with BleakClient(device, adapter=ble_adapter) as client:
 
-        async def gnss_notification_handler(sender, data):
+        async def gnss_notification_handler(sender: Any, data: Any) -> None:
             iTOW, lon, lat, hMSL, velN, velE, velD = unpack("<L6l", data)
             print(
                 f"{iTOW/1e3:.3f}, "
@@ -267,20 +282,81 @@ async def display_gnss(address):
             await client.stop_notify(CRS_TX_UUID)
 
 
-async def list_devices():
+async def list_devices(address: str, flysight_name: str) -> None:
+    await get_flysight_device(address, flysight_name)
+
+
+async def pair_flysight(flysight_name: str) -> None:
+    directory = "/"
+
+    device = await get_flysight_device("auto", flysight_name)
+    async with BleakClient(device, adapter=ble_adapter) as client:
+        next_packet_num = 0
+
+        async def dir_notification_handler(sender: Any, data: Any) -> None:
+            nonlocal next_packet_num
+            if data[0] == 0x11:
+                packet_num = int.from_bytes(data[1:2], byteorder="little")
+                if packet_num == (next_packet_num & 0xFF):
+                    parsed_info = parse_filinfo(data[2:])
+                    if parsed_info:
+                        print(parsed_info)
+                    next_packet_num += 1
+                else:
+                    print("Error: Dropped packet.")
+                    return
+
+        # await client.pair(protection_level=2)
+        await client.start_notify(CRS_TX_UUID, dir_notification_handler)
+        await client.write_gatt_char(
+            CRS_RX_UUID, b"\x05" + directory.encode(), response=False
+        )
+        await asyncio.sleep(5)  # Wait for notifications
+        await client.stop_notify(CRS_TX_UUID)
+
+
+async def get_flysight_device(address: str, flysight_name: str) -> BLEDevice:
+    def is_match() -> bool:
+        if address == "auto" and device.name == flysight_name:
+            return True
+        elif device.address.lower() == address.lower():
+            return True
+        return False
+
     devices = await BleakScanner.discover()
     for device in devices:
-        print(f"Device {device.name} found with address {device.address}")
+        color = ""
+        reset = ""
+        if is_match():
+            color = "\x1b[32;1m"
+            reset = "\x1b[0m"
+        print(f"{color}Device {device.name} found with address {device.address}{reset}")
+
+    for device in devices:
+        if is_match():
+            return device
+    raise Exception("Could not find device")
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="BLE Utility")
 
     parser.add_argument(
         "--list", action="store_true", help="List all available BLE devices."
     )
+    parser.add_argument("--pair", action="store_true", help="Pair the flysight.")
     parser.add_argument(
-        "--address", type=str, metavar="ADDRESS", help="Specify the BLE device address."
+        "--address",
+        type=str,
+        default="auto",
+        metavar="ADDRESS",
+        help="Specify the BLE device address.",
+    )
+    parser.add_argument(
+        "--name",
+        type=str,
+        default="FlySight",
+        help="Name of the flysight bluetooth device.",
     )
     parser.add_argument(
         "--dir",
@@ -324,9 +400,11 @@ def main():
     args = parser.parse_args()
 
     if args.list:
-        asyncio.run(list_devices())
+        asyncio.run(list_devices("auto", args.name))
+    elif args.pair:
+        asyncio.run(pair_flysight(args.name))
     elif args.address and args.dir:
-        asyncio.run(list_directory(args.address, args.dir))
+        asyncio.run(list_directory(args.address, args.name, args.dir))
     elif args.address and args.read:
         offset, stride, remote_filename, *local_filename = args.read
         local_filename = (
@@ -335,6 +413,7 @@ def main():
         asyncio.run(
             read_file(
                 args.address,
+                args.name,
                 int(offset),
                 int(stride),
                 remote_filename,
@@ -344,15 +423,17 @@ def main():
         )
     elif args.address and args.write:
         local_filename, remote_filename = args.write
-        asyncio.run(write_file(args.address, local_filename, remote_filename))
+        asyncio.run(
+            write_file(args.address, args.name, local_filename, remote_filename)
+        )
     elif args.address and args.create:
-        asyncio.run(create_file(args.address, args.create))
+        asyncio.run(create_file(args.address, args.name, args.create))
     elif args.address and args.delete:
-        asyncio.run(delete_file(args.address, args.delete))
+        asyncio.run(delete_file(args.address, args.name, args.delete))
     elif args.address and args.mkdir:
-        asyncio.run(mkdir(args.address, args.mkdir))
+        asyncio.run(mkdir(args.address, args.name, args.mkdir))
     elif args.address and args.gnss:
-        asyncio.run(display_gnss(args.address))
+        asyncio.run(display_gnss(args.address, args.name))
     else:
         print("Invalid arguments. Use --help for usage information.")
 
